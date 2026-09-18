@@ -76,3 +76,16 @@ The memory limit intentionally makes the failure visible. In a real rollout, shi
 4. Mitigate: disable the batch or cap its chunk size, restart one unhealthy replica at a time, and keep readiness separate from liveness.
 5. Fix: process batches in bounded chunks, release references after commit, and add a regression test for stable memory over repeated runs.
 6. Deploy: canary the fix before 09:00 Tuesday, verify memory slope rather than only a point-in-time value, and keep rollback available.
+
+## Quick testing on EC2
+- Launch the EC2 (ubuntu)
+- ssh
+- run the script to setup
+```bash
+chmod +x ./setup_ec2.sh
+sudo bash setup_ec2.sh
+```
+- check the container stat
+```bash
+sudo docker stats
+```
