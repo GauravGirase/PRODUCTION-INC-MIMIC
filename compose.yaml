@@ -1,0 +1,9 @@
+services:
+  erp:
+    build: .
+    environment:
+      ERP_LEAK_ENABLED: "true"
+    ports:
+      - "8080:8080"
+    mem_limit: 256m
+    restart: on-failure

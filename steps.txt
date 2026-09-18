@@ -1,0 +1,68 @@
+# Ubuntu EC2 setup
+
+## 1. Copy this project to the EC2 instance
+
+From Windows PowerShell, replace the placeholder values:
+
+```powershell
+scp -i .\your-key.pem -r .\PI-1 ubuntu@YOUR_EC2_PUBLIC_IP:/home/ubuntu/
+ssh -i .\your-key.pem ubuntu@YOUR_EC2_PUBLIC_IP
+```
+
+## 2. Install and start everything
+
+On the Ubuntu EC2 instance:
+
+```bash
+cd /home/ubuntu/PI-1
+chmod +x setup_ec2.sh
+sudo ./setup_ec2.sh
+```
+
+The script installs Docker Engine, Docker Compose v2, Python 3, and the Python test dependencies available from Ubuntu. It then runs the tests, builds the image, starts the Compose service, and checks `/healthz`.
+
+## 3. Verify the running service
+
+On the EC2 instance:
+
+```bash
+sudo docker compose ps
+curl http://localhost:8080/healthz
+curl http://localhost:8080/metrics
+```
+
+## 4. Reproduce the OOM behavior
+
+Keep the Compose service running, then use a second SSH session or background shell:
+
+```bash
+cd /home/ubuntu/PI-1
+python3 load_oom.py --rows 25000 --batches 100 --scan-workers 20
+```
+
+Watch memory and restarts from another shell:
+
+```bash
+sudo docker stats
+sudo docker compose ps
+sudo docker compose logs -f
+```
+
+`retained_rows` should increase after every batch. When the 256 MB limit is reached, requests will fail or the container will restart. Stop the experiment with `Ctrl+C` and bring the service back with `sudo docker compose up -d`.
+
+To access it from your computer, allow inbound TCP `8080` in the EC2 security group, then open:
+
+```text
+http://YOUR_EC2_PUBLIC_IP:8080/healthz
+```
+
+Only expose port `8080` temporarily for this lab. Production traffic should use a reverse proxy and HTTPS.
+
+## Useful operations
+
+```bash
+sudo docker compose logs -f
+sudo docker compose restart
+sudo docker compose down
+sudo docker compose up --build -d
+```
